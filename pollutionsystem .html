@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Government Soot Monitoring System</title>
+
+<style>
+body {
+    font-family: Copperplate gothic bold;
+    background: #e8f5f9;
+    margin: 0;
+}
+
+/* 🔵 WELCOME SCREEN */
+#welcomeScreen {
+    position: fixed;
+    width: 100%;
+    height: 100vh;
+    background-color: #0b3d91;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    opacity: 1;
+    transition: opacity 1.5s ease;
+}
+
+#welcomeScreen.fade-out {
+    opacity: 0;
+}
+
+/* 🔷 LOGO DESIGN */
+   .main-logo {
+    width: 220px;
+    margin-bottom: 20px;
+    animation: zoomIn 1.5s ease;
+}
+
+@keyframes zoomIn {
+    from {
+        transform: scale(0.7);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Small top logo */
+.top-logo img {
+    width: 160px;
+}
+
+#welcomeScreen h1 {
+    color: white;
+    font-size: 38px;
+    font-weight: bold;
+    letter-spacing: 2px;
+}
+
+/* Small top logo */
+.top-logo {
+    text-align: left;
+    font-size: 30px;
+    font-weight: bold;
+    color: #0b3d91;
+    margin-top: 10px;
+}
+
+/* Government Button */
+.gov-btn {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    background: #d32f2f;
+    color: white;
+}
+
+/* Containers */
+.container {
+    background: white;
+    padding: 25px;
+    width: 360px;
+    margin: 80px auto;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    text-align: center;
+}
+
+input {
+    width: 90%;
+    padding: 8px;
+    margin: 6px 0;
+}
+
+button {
+    padding: 8px 12px;
+    margin: 6px;
+    border: none;
+    border-radius: 6px;
+    background: #0288d1;
+    color: white;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #0277bd;
+}
+
+.hidden { display: none; }
+
+.good { color: green; font-weight: bold; }
+.moderate { color: orange; font-weight: bold; }
+.bad { color: red; font-weight: bold; }
+
+table {
+    margin: auto;
+    border-collapse: collapse;
+}
+
+table, th, td {
+    border: 1px solid black;
+    padding: 6px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- 🔵 Welcome Screen with Logo -->
+<div id="welcomeScreen">
+   <img src="logo.png" class="main-logo" alt="Airdefender-X Logo">
+    <h1>Welcome to SOOT-X</h1>
+</div>
+
+<button class="gov-btn" onclick="showAdminLogin()">Government Access</button>
+
+<div class="top-logo">
+    <img src="logo.png" alt="Airdefender-X Logo">
+</div>
+<div class="container" id="userSection">
+
+    <h2>Vehicle Login</h2>
+    <input type="text" id="vehicleNumber" placeholder="Enter Vehicle Number">
+    <button onclick="userLogin()">User Login</button>
+
+    <hr>
+
+    <h3>Register Vehicle</h3>
+    <input type="text" id="regVehicleNumber" placeholder="Vehicle Number">
+    <input type="date" id="serviceDate">
+    <button onclick="registerVehicle()">Register Vehicle</button>
+
+</div>
+
+<div class="container hidden" id="adminLoginSection">
+    <h2>Government Admin Login</h2>
+    <input type="text" id="adminId" placeholder="Admin ID">
+    <input type="password" id="adminPass" placeholder="Password">
+    <button onclick="adminLogin()">Login</button>
+    <button onclick="closeAdminLogin()">Back</button>
+</div>
+
+<div id="userPortal" class="hidden" style="text-align:center;">
+    <h2>User Vehicle Dashboard</h2>
+    <div id="userDetails"></div>
+    <button onclick="logout()">Logout</button>
+</div>
+
+<div id="adminPortal" class="hidden" style="text-align:center;">
+    <h2>Government Admin Dashboard</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Vehicle No</th>
+                <th>Soot %</th>
+                <th>Status</th>
+                <th>Service Date</th>
+                <th>Next Due</th>
+            </tr>
+        </thead>
+        <tbody id="adminTable"></tbody>
+    </table>
+    <br>
+    <button onclick="logout()">Logout</button>
+</div>
+
+<script>
+
+/* Smooth Fade Out */
+window.onload = function() {
+    setTimeout(function() {
+        document.getElementById("welcomeScreen").classList.add("fade-out");
+
+        setTimeout(function(){
+            document.getElementById("welcomeScreen").style.display = "none";
+        }, 1500);
+
+    }, 2000);
+};
+
+let vehicles = JSON.parse(localStorage.getItem("vehicles")) || [];
+
+function saveVehicles() {
+    localStorage.setItem("vehicles", JSON.stringify(vehicles));
+}
+
+function showAdminLogin() {
+    document.getElementById("userSection").classList.add("hidden");
+    document.getElementById("adminLoginSection").classList.remove("hidden");
+}
+
+function closeAdminLogin() {
+    document.getElementById("adminLoginSection").classList.add("hidden");
+    document.getElementById("userSection").classList.remove("hidden");
+}
+
+function registerVehicle() {
+
+    let number = document.getElementById("regVehicleNumber").value.trim();
+    let serviceDate = document.getElementById("serviceDate").value;
+
+    if(number === "" || serviceDate === "") {
+        alert("Fill all fields");
+        return;
+    }
+
+    if(vehicles.find(v => v.number === number)) {
+        alert("Vehicle already registered!");
+        return;
+    }
+
+    let soot = Math.floor(Math.random() * 100);
+
+    let nextDue = new Date(serviceDate);
+    nextDue.setMonth(nextDue.getMonth() + 6);
+
+    vehicles.push({
+        number,
+        soot,
+        serviceDate,
+        nextDue: nextDue.toISOString().split("T")[0]
+    });
+
+    saveVehicles();
+    alert("Vehicle Registered Successfully!");
+}
+
+function userLogin() {
+
+    let number = document.getElementById("vehicleNumber").value.trim();
+    let vehicle = vehicles.find(v => v.number === number);
+
+    if(vehicle) {
+
+        document.getElementById("userSection").classList.add("hidden");
+        document.getElementById("userPortal").classList.remove("hidden");
+
+        let status = getStatus(vehicle.soot);
+
+        document.getElementById("userDetails").innerHTML = `
+            <p><strong>Vehicle:</strong> ${vehicle.number}</p>
+            <p><strong>Soot:</strong> ${vehicle.soot}%</p>
+            <p><strong>Status:</strong> <span class="${status.class}">${status.text}</span></p>
+            <p><strong>Last Service:</strong> ${vehicle.serviceDate}</p>
+            <p><strong>Next Due:</strong> ${vehicle.nextDue}</p>
+        `;
+
+    } else {
+        alert("Vehicle not registered");
+    }
+}
+
+function adminLogin() {
+
+    let id = document.getElementById("adminId").value;
+    let pass = document.getElementById("adminPass").value;
+
+    if(id === "Admin-login" && pass === "Itsme") {
+
+        document.getElementById("adminLoginSection").classList.add("hidden");
+        document.getElementById("adminPortal").classList.remove("hidden");
+
+        loadAdminData();
+
+    } else {
+        alert("Invalid Admin Credentials");
+    }
+}
+
+function getStatus(soot) {
+    if(soot <= 40) return { text: "GOOD", class: "good" };
+    if(soot <= 75) return { text: "MODERATE", class: "moderate" };
+    return { text: "BAD - Service Required", class: "bad" };
+}
+
+function loadAdminData() {
+
+    let table = document.getElementById("adminTable");
+    table.innerHTML = "";
+
+    vehicles.forEach(v => {
+
+        let status = getStatus(v.soot);
+
+        table.innerHTML += `
+            <tr>
+                <td>${v.number}</td>
+                <td>${v.soot}%</td>
+                <td class="${status.class}">${status.text}</td>
+                <td>${v.serviceDate}</td>
+                <td>${v.nextDue}</td>
+            </tr>
+        `;
+    });
+}
+
+function logout() {
+    location.reload();
+}
+
+</script>
+
+</body>
+</html>
