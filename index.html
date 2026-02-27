@@ -5,7 +5,7 @@
 
 <style>
 body {
-    font-family: Copperplate gothic bold;
+    font-family: Arial;
     background: #e8f5f9;
     margin: 0;
 }
@@ -23,16 +23,55 @@ body {
     z-index: 9999;
     opacity: 1;
     transition: opacity 1.5s ease;
+    overflow: hidden;
 }
 
 #welcomeScreen.fade-out {
     opacity: 0;
 }
 
-/* 🔷 LOGO DESIGN */
-   .main-logo {
+/* 💨 Smoke Effect */
+.smoke {
+    position: absolute;
+    width: 220px;
+    height: 220px;
+    background: radial-gradient(circle, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.05) 60%, transparent 70%);
+    border-radius: 50%;
+    animation: smokeMove 6s infinite ease-in-out;
+    filter: blur(25px);
+}
+
+.smoke:nth-child(1) {
+    top: 45%;
+    left: 48%;
+}
+
+.smoke:nth-child(2) {
+    top: 50%;
+    left: 52%;
+    animation-delay: 3s;
+}
+
+@keyframes smokeMove {
+    0% {
+        transform: translateY(20px) scale(0.9);
+        opacity: 0.3;
+    }
+    50% {
+        transform: translateY(-40px) scale(1.2);
+        opacity: 0.6;
+    }
+    100% {
+        transform: translateY(-90px) scale(1.5);
+        opacity: 0;
+    }
+}
+
+/* Logo */
+.main-logo {
     width: 220px;
     margin-bottom: 20px;
+    z-index: 2;
     animation: zoomIn 1.5s ease;
 }
 
@@ -47,25 +86,18 @@ body {
     }
 }
 
-/* Small top logo */
-.top-logo img {
-    width: 160px;
-}
-
 #welcomeScreen h1 {
     color: white;
     font-size: 38px;
     font-weight: bold;
     letter-spacing: 2px;
+    z-index: 2;
 }
 
-/* Small top logo */
-.top-logo {
-    text-align: left;
-    font-size: 30px;
-    font-weight: bold;
-    color: #0b3d91;
-    margin-top: 10px;
+/* Top logo */
+.top-logo img {
+    width: 160px;
+    margin-top: 15px;
 }
 
 /* Government Button */
@@ -109,6 +141,225 @@ button:hover {
 }
 
 .hidden { display: none; }
+
+.good { color: green; font-weight: bold; }
+.moderate { color: orange; font-weight: bold; }
+.bad { color: red; font-weight: bold; }
+
+table {
+    margin: auto;
+    border-collapse: collapse;
+}
+
+table, th, td {
+    border: 1px solid black;
+    padding: 6px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- 🔵 Welcome Screen with Smoke -->
+<div id="welcomeScreen">
+    <div class="smoke"></div>
+    <div class="smoke"></div>
+
+    <img src="https://arnavkasbe18.github.io/Airdefender-X-/logo.png" class="main-logo" alt="SOOT-X Logo">
+    <h1>Welcome to SOOT-X</h1>
+</div>
+
+<button class="gov-btn" onclick="showAdminLogin()">Government Access</button>
+
+<div class="top-logo">
+    <img src="https://arnavkasbe18.github.io/Airdefender-X-/logo.png" alt="SOOT-X Logo">
+</div>
+
+<div class="container" id="userSection">
+
+    <h2>Vehicle Login</h2>
+    <input type="text" id="vehicleNumber" placeholder="Enter Vehicle Number">
+    <button onclick="userLogin()">User Login</button>
+
+    <hr>
+
+    <h3>Register Vehicle</h3>
+    <input type="text" id="regVehicleNumber" placeholder="Vehicle Number">
+    <input type="date" id="serviceDate">
+    <button onclick="registerVehicle()">Register Vehicle</button>
+
+</div>
+
+<div class="container hidden" id="adminLoginSection">
+    <h2>Government Admin Login</h2>
+    <input type="text" id="adminId" placeholder="Admin ID">
+    <input type="password" id="adminPass" placeholder="Password">
+    <button onclick="adminLogin()">Login</button>
+    <button onclick="closeAdminLogin()">Back</button>
+</div>
+
+<div id="userPortal" class="hidden" style="text-align:center;">
+    <h2>User Vehicle Dashboard</h2>
+    <div id="userDetails"></div>
+    <button onclick="logout()">Logout</button>
+</div>
+
+<div id="adminPortal" class="hidden" style="text-align:center;">
+    <h2>Government Admin Dashboard</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Vehicle No</th>
+                <th>Soot %</th>
+                <th>Status</th>
+                <th>Service Date</th>
+                <th>Next Due</th>
+            </tr>
+        </thead>
+        <tbody id="adminTable"></tbody>
+    </table>
+    <br>
+    <button onclick="logout()">Logout</button>
+</div>
+
+<script>
+
+/* Smooth Fade Out */
+window.onload = function() {
+    setTimeout(function() {
+        document.getElementById("welcomeScreen").classList.add("fade-out");
+
+        setTimeout(function(){
+            document.getElementById("welcomeScreen").style.display = "none";
+        }, 1500);
+
+    }, 2500);
+};
+
+let vehicles = JSON.parse(localStorage.getItem("vehicles")) || [];
+
+function saveVehicles() {
+    localStorage.setItem("vehicles", JSON.stringify(vehicles));
+}
+
+function showAdminLogin() {
+    document.getElementById("userSection").classList.add("hidden");
+    document.getElementById("adminLoginSection").classList.remove("hidden");
+}
+
+function closeAdminLogin() {
+    document.getElementById("adminLoginSection").classList.add("hidden");
+    document.getElementById("userSection").classList.remove("hidden");
+}
+
+function registerVehicle() {
+
+    let number = document.getElementById("regVehicleNumber").value.trim();
+    let serviceDate = document.getElementById("serviceDate").value;
+
+    if(number === "" || serviceDate === "") {
+        alert("Fill all fields");
+        return;
+    }
+
+    if(vehicles.find(v => v.number === number)) {
+        alert("Vehicle already registered!");
+        return;
+    }
+
+    let soot = Math.floor(Math.random() * 100);
+
+    let nextDue = new Date(serviceDate);
+    nextDue.setMonth(nextDue.getMonth() + 6);
+
+    vehicles.push({
+        number,
+        soot,
+        serviceDate,
+        nextDue: nextDue.toISOString().split("T")[0]
+    });
+
+    saveVehicles();
+    alert("Vehicle Registered Successfully!");
+}
+
+function userLogin() {
+
+    let number = document.getElementById("vehicleNumber").value.trim();
+    let vehicle = vehicles.find(v => v.number === number);
+
+    if(vehicle) {
+
+        document.getElementById("userSection").classList.add("hidden");
+        document.getElementById("userPortal").classList.remove("hidden");
+
+        let status = getStatus(vehicle.soot);
+
+        document.getElementById("userDetails").innerHTML = `
+            <p><strong>Vehicle:</strong> ${vehicle.number}</p>
+            <p><strong>Soot:</strong> ${vehicle.soot}%</p>
+            <p><strong>Status:</strong> <span class="${status.class}">${status.text}</span></p>
+            <p><strong>Last Service:</strong> ${vehicle.serviceDate}</p>
+            <p><strong>Next Due:</strong> ${vehicle.nextDue}</p>
+        `;
+
+    } else {
+        alert("Vehicle not registered");
+    }
+}
+
+function adminLogin() {
+
+    let id = document.getElementById("adminId").value;
+    let pass = document.getElementById("adminPass").value;
+
+    if(id === "Admin-login" && pass === "Itsme") {
+
+        document.getElementById("adminLoginSection").classList.add("hidden");
+        document.getElementById("adminPortal").classList.remove("hidden");
+
+        loadAdminData();
+
+    } else {
+        alert("Invalid Admin Credentials");
+    }
+}
+
+function getStatus(soot) {
+    if(soot <= 40) return { text: "GOOD", class: "good" };
+    if(soot <= 75) return { text: "MODERATE", class: "moderate" };
+    return { text: "BAD - Service Required", class: "bad" };
+}
+
+function loadAdminData() {
+
+    let table = document.getElementById("adminTable");
+    table.innerHTML = "";
+
+    vehicles.forEach(v => {
+
+        let status = getStatus(v.soot);
+
+        table.innerHTML += `
+            <tr>
+                <td>${v.number}</td>
+                <td>${v.soot}%</td>
+                <td class="${status.class}">${status.text}</td>
+                <td>${v.serviceDate}</td>
+                <td>${v.nextDue}</td>
+            </tr>
+        `;
+    });
+}
+
+function logout() {
+    location.reload();
+}
+
+</script>
+
+</body>
+</html>.hidden { display: none; }
 
 .good { color: green; font-weight: bold; }
 .moderate { color: orange; font-weight: bold; }
